@@ -5,6 +5,7 @@
 
 profile:
   name: "Eduardo"
+  bio: "Frontend developer com foco em React, Next.js e TypeScript, com experiência em Node.js e desenvolvimento fullstack."
 
   # Suas stacks (usadas para calcular o % de match com cada vaga)
   stack:
@@ -63,3 +64,29 @@ experience:
     - "1-3 years"
     - "2-4 years"
     - "up to 4 years"
+
+# ============================================================
+# CANDIDATURA AUTOMÁTICA
+# ============================================================
+
+auto_apply:
+  enabled: false          # mude para true para ativar
+  dry_run: true           # true = preenche o formulário mas NÃO envia; mude para false quando pronto
+  min_match_pct: 70       # só aplica em vagas com % de match maior ou igual a este valor
+  max_per_run: 3          # limite de candidaturas por execução diária
+  cover_letter_language: "en"  # "en" para inglês, "pt-BR" para português
+  ats_allowlist:          # plataformas permitidas (LinkedIn e Indeed nunca são usados)
+    - greenhouse
+    - lever
+    - workable
+
+# Seus dados pessoais para preencher os formulários automaticamente
+# IMPORTANTE: preencha todos os campos antes de ativar o auto_apply
+applicant:
+  first_name: "Eduardo"
+  last_name: ""                      # preencha seu sobrenome
+  email: ""                          # seu email de candidatura
+  phone: ""                          # ex: +55 11 99999-9999
+  linkedin_url: ""                   # ex: https://linkedin.com/in/eduardo
+  location: "Brazil (Remote)"
+  resume_path: "assets/resume.pdf"   # coloque seu currículo neste caminho

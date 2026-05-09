@@ -55,11 +55,22 @@
       border-radius: 1rem; padding: 1.25rem;
       display: flex; flex-direction: column; gap: 0.75rem;
       transition: transform .15s, box-shadow .15s;
+      position: relative;
     }
     .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+    .card.applied-success { border-color: #16a34a; }
+    .card.applied-fail    { border-color: #dc2626; }
+
+    .applied-badge {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.55rem;
+      border-radius: 2rem; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-auto-ok  { background: #14532d; color: #4ade80; }
+    .badge-auto-err { background: #450a0a; color: #f87171; }
 
     .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-    .card-title { font-size: 1rem; font-weight: 600; color: #f1f5f9; line-height: 1.35; }
+    .card-title { font-size: 1rem; font-weight: 600; color: #f1f5f9; line-height: 1.35; padding-right: 5.5rem; }
     .match-badge { flex-shrink: 0; font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 2rem; }
     .match-green  { background: #14532d; color: #4ade80; }
     .match-yellow { background: #713f12; color: #facc15; }
@@ -79,6 +90,18 @@
     .skill-found   { background: #14532d; color: #86efac; }
     .skill-missing { background: #1e293b; color: #64748b; border: 1px solid #334155; }
 
+    .cover-letter-toggle {
+      background: none; border: 1px solid #334155; color: #64748b;
+      border-radius: 0.4rem; padding: 0.25rem 0.6rem; font-size: 0.75rem;
+      cursor: pointer; text-align: left; width: 100%; transition: all .15s;
+    }
+    .cover-letter-toggle:hover { border-color: #475569; color: #94a3b8; }
+    .cover-letter-box {
+      display: none; background: #0f172a; border: 1px solid #334155;
+      border-radius: 0.5rem; padding: 0.75rem; font-size: 0.78rem;
+      color: #94a3b8; line-height: 1.6; white-space: pre-wrap; margin-top: -0.25rem;
+    }
+
     .source-tag { font-size: 0.72rem; color: #475569; align-self: flex-end; margin-top: auto; }
     .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; }
     .btn-apply {
@@ -87,6 +110,11 @@
       cursor: pointer; text-decoration: none; transition: background .15s;
     }
     .btn-apply:hover { background: #1d4ed8; }
+    .btn-applied {
+      background: #14532d; color: #4ade80; border: none; border-radius: 0.5rem;
+      padding: 0.45rem 1rem; font-size: 0.85rem; font-weight: 600;
+      cursor: default; text-decoration: none;
+    }
 
     .empty { text-align: center; padding: 4rem 2rem; color: #475569; }
     .empty h2 { font-size: 1.25rem; margin-bottom: 0.5rem; }
@@ -101,11 +129,17 @@
   <p class="subtitle">Atualizado em {{ updated_at }}</p>
   <div class="stats">
     <span><strong>{{ total }}</strong> vagas encontradas</span>
+    {% if applied_count is defined and applied_count > 0 %}
+    <span><strong>{{ applied_count }}</strong> candidaturas enviadas</span>
+    {% endif %}
   </div>
 </header>
 
 <div class="filters">
   <button class="filter-btn active" onclick="filterCards(this, 'all')">Todas</button>
+  <button class="filter-btn" onclick="filterCards(this, 'new')">Novas</button>
+  <button class="filter-btn" onclick="filterCards(this, 'applied')">Aplicadas</button>
+  <button class="filter-btn" onclick="filterCards(this, 'failed')">Falhou</button>
   <button class="filter-btn" onclick="filterCards(this, 'remote')">Remote</button>
   <button class="filter-btn" onclick="filterCards(this, 'hybrid')">Hybrid</button>
   <button class="filter-btn" onclick="filterCards(this, 'green')">≥70% match</button>
@@ -120,9 +154,20 @@
     {% elif pct >= 40 %}{% set badge_class = "match-yellow" %}
     {% else %}{% set badge_class = "match-red" %}{% endif %}
 
-    <div class="card"
+    {% set apply_state = "applied" if job.applied and job.apply_success else ("failed" if job.applied and not job.apply_success else "new") %}
+
+    <div class="card {% if job.applied and job.apply_success %}applied-success{% elif job.applied and not job.apply_success %}applied-fail{% endif %}"
          data-modality="{{ job.modality | lower }}"
-         data-match="{{ 'green' if pct >= 70 else ('yellow' if pct >= 40 else 'red') }}">
+         data-match="{{ 'green' if pct >= 70 else ('yellow' if pct >= 40 else 'red') }}"
+         data-state="{{ apply_state }}">
+
+      {% if job.applied %}
+        {% if job.apply_success %}
+          <span class="applied-badge badge-auto-ok">Auto-aplicada ✓</span>
+        {% else %}
+          <span class="applied-badge badge-auto-err">Falhou ✗</span>
+        {% endif %}
+      {% endif %}
 
       <div class="card-header">
         <div class="card-title">{{ job.title }}</div>
@@ -140,9 +185,20 @@
         {% for s in job.skills_missing %}<span class="skill skill-missing">{{ s }}</span>{% endfor %}
       </div>
 
+      {% if job.cover_letter is defined and job.cover_letter %}
+      <div>
+        <button class="cover-letter-toggle" onclick="toggleCoverLetter(this)">▶ Ver cover letter gerada</button>
+        <div class="cover-letter-box">{{ job.cover_letter }}</div>
+      </div>
+      {% endif %}
+
       <div class="card-footer">
         <span class="source-tag">{{ job.source }}</span>
-        <a class="btn-apply" href="{{ job.url }}" target="_blank" rel="noopener">Ver Vaga</a>
+        {% if job.applied and job.apply_success %}
+          <span class="btn-applied">Candidatado ✓</span>
+        {% else %}
+          <a class="btn-apply" href="{{ job.url }}" target="_blank" rel="noopener">Ver Vaga</a>
+        {% endif %}
       </div>
     </div>
     {% endfor %}
@@ -166,8 +222,22 @@
         card.style.display = card.dataset.modality.includes(filter) ? '' : 'none';
         return;
       }
-      card.style.display = card.dataset.match === filter ? '' : 'none';
+      if (filter === 'green' || filter === 'yellow') {
+        card.style.display = card.dataset.match === filter ? '' : 'none';
+        return;
+      }
+      if (filter === 'new' || filter === 'applied' || filter === 'failed') {
+        card.style.display = card.dataset.state === filter ? '' : 'none';
+        return;
+      }
     });
+  }
+
+  function toggleCoverLetter(btn) {
+    const box = btn.nextElementSibling;
+    const open = box.style.display === 'block';
+    box.style.display = open ? 'none' : 'block';
+    btn.textContent = (open ? '▶' : '▼') + ' Ver cover letter gerada';
   }
 </script>
 
