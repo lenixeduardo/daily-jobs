@@ -341,6 +341,7 @@ def main() -> None:
 
         for job in candidates:
             cover = generate_cover_letter(job, config.get("profile", {}), language=lang)
+            job["cover_letter"] = cover
             result = attempt_auto_apply(job, applicant, cover, dry_run=dry_run, ats_allowlist=allowlist)
             if result["ats"] is not None:
                 mark_applied(job, method="auto", ats=result["ats"], success=result["success"])
