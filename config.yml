@@ -70,7 +70,7 @@ experience:
 # ============================================================
 
 auto_apply:
-  enabled: false          # mude para true para ativar
+  enabled: true          # mude para true para ativar
   dry_run: true           # true = preenche o formulário mas NÃO envia; mude para false quando pronto
   min_match_pct: 70       # só aplica em vagas com % de match maior ou igual a este valor
   max_per_run: 3          # limite de candidaturas por execução diária
@@ -83,10 +83,10 @@ auto_apply:
 # Seus dados pessoais para preencher os formulários automaticamente
 # IMPORTANTE: preencha todos os campos antes de ativar o auto_apply
 applicant:
-  first_name: "Eduardo"
-  last_name: ""                      # preencha seu sobrenome
-  email: ""                          # seu email de candidatura
-  phone: ""                          # ex: +55 11 99999-9999
-  linkedin_url: ""                   # ex: https://linkedin.com/in/eduardo
+  first_name: "Lenix"
+  last_name: "Eduardo"                      # preencha seu sobrenome
+  email: "lenix.camargo@gmail.com"                          # seu email de candidatura
+  phone: "+5511984477950"                          # ex: +55 11 99999-9999
+  linkedin_url: "https://br.linkedin.com/in/eduardo-lenix-70824332b"  # ex: https://linkedin.com/in/eduardo
   location: "Brazil (Remote)"
   resume_path: "assets/resume.pdf"   # coloque seu currículo neste caminho
