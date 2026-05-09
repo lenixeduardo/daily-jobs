@@ -102,6 +102,23 @@
       color: #94a3b8; line-height: 1.6; white-space: pre-wrap; margin-top: -0.25rem;
     }
 
+    .form-data-toggle {
+      background: none; border: 1px solid #1d4e1a; color: #4ade80;
+      border-radius: 0.4rem; padding: 0.25rem 0.6rem; font-size: 0.75rem;
+      cursor: pointer; text-align: left; width: 100%; transition: all .15s;
+    }
+    .form-data-toggle:hover { border-color: #16a34a; color: #86efac; }
+    .form-data-box {
+      display: none; background: #0d1f0d; border: 1px solid #1d4e1a;
+      border-radius: 0.5rem; padding: 0.75rem; font-size: 0.78rem;
+      color: #86efac; margin-top: -0.25rem;
+    }
+    .form-data-grid {
+      display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 0.75rem; align-items: baseline;
+    }
+    .form-data-label { color: #4ade80; font-weight: 600; white-space: nowrap; }
+    .form-data-value { color: #a7f3d0; word-break: break-all; }
+
     .source-tag { font-size: 0.72rem; color: #475569; align-self: flex-end; margin-top: auto; }
     .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; }
     .btn-apply {
@@ -192,6 +209,36 @@
       </div>
       {% endif %}
 
+      {% if job.applied and job.apply_form_data %}
+      <div>
+        <button class="form-data-toggle" onclick="toggleFormData(this)">▶ Ver dados enviados no formulário</button>
+        <div class="form-data-box">
+          <div class="form-data-grid">
+            <span class="form-data-label">Nome</span>
+            <span class="form-data-value">{{ job.apply_form_data.first_name }} {{ job.apply_form_data.last_name }}</span>
+            <span class="form-data-label">Email</span>
+            <span class="form-data-value">{{ job.apply_form_data.email }}</span>
+            <span class="form-data-label">Telefone</span>
+            <span class="form-data-value">{{ job.apply_form_data.phone }}</span>
+            <span class="form-data-label">LinkedIn</span>
+            <span class="form-data-value">{{ job.apply_form_data.linkedin_url }}</span>
+            <span class="form-data-label">Localização</span>
+            <span class="form-data-value">{{ job.apply_form_data.location }}</span>
+            <span class="form-data-label">Currículo</span>
+            <span class="form-data-value">{{ job.apply_form_data.resume_path }}</span>
+            {% if job.apply_ats %}
+            <span class="form-data-label">ATS</span>
+            <span class="form-data-value">{{ job.apply_ats }}</span>
+            {% endif %}
+            {% if job.applied_at %}
+            <span class="form-data-label">Aplicado em</span>
+            <span class="form-data-value">{{ job.applied_at[:16] | replace("T", " ") }} UTC</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
       <div class="card-footer">
         <span class="source-tag">{{ job.source }}</span>
         {% if job.applied and job.apply_success %}
@@ -238,6 +285,13 @@
     const open = box.style.display === 'block';
     box.style.display = open ? 'none' : 'block';
     btn.textContent = (open ? '▶' : '▼') + ' Ver cover letter gerada';
+  }
+
+  function toggleFormData(btn) {
+    const box = btn.nextElementSibling;
+    const open = box.style.display === 'block';
+    box.style.display = open ? 'none' : 'block';
+    btn.textContent = (open ? '▶' : '▼') + ' Ver dados enviados no formulário';
   }
 </script>
 

@@ -71,7 +71,7 @@ experience:
 
 auto_apply:
   enabled: true          # mude para true para ativar
-  dry_run: true           # true = preenche o formulário mas NÃO envia; mude para false quando pronto
+  dry_run: false          # true = preenche o formulário mas NÃO envia; mude para false quando pronto
   min_match_pct: 70       # só aplica em vagas com % de match maior ou igual a este valor
   max_per_run: 3          # limite de candidaturas por execução diária
   cover_letter_language: "en"  # "en" para inglês, "pt-BR" para português
