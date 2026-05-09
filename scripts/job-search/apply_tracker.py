@@ -23,7 +23,7 @@ def load_applied_ids() -> set[str]:
     return {entry["id"] for entry in _state.get("applied", [])}
 
 
-def mark_applied(job: dict, *, method: str, ats: str | None, success: bool) -> None:
+def mark_applied(job: dict, *, method: str, ats: str | None, success: bool, form_data: dict | None = None) -> None:
     entry = {
         "id": job["id"],
         "title": job["title"],
@@ -33,6 +33,8 @@ def mark_applied(job: dict, *, method: str, ats: str | None, success: bool) -> N
         "ats": ats,
         "success": success,
     }
+    if form_data:
+        entry["form_data"] = form_data
     _state.setdefault("applied", []).append(entry)
     log.info("Marked job '%s' at '%s' as applied (success=%s)", job["title"], job["company"], success)
 

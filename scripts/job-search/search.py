@@ -282,6 +282,9 @@ def render_dashboard(jobs: list[dict], config: dict, applied_map: dict[str, dict
         job["applied"] = entry is not None
         job["apply_success"] = entry["success"] if entry else None
         job["apply_method"] = entry["method"] if entry else None
+        job["apply_form_data"] = entry.get("form_data") if entry else None
+        job["applied_at"] = entry.get("applied_at") if entry else None
+        job["apply_ats"] = entry.get("ats") if entry else None
 
     return template.render(
         jobs=jobs,
@@ -344,7 +347,16 @@ def main() -> None:
             job["cover_letter"] = cover
             result = attempt_auto_apply(job, applicant, cover, dry_run=dry_run, ats_allowlist=allowlist)
             if result["ats"] is not None:
-                mark_applied(job, method="auto", ats=result["ats"], success=result["success"])
+                form_data = {
+                    "first_name": applicant.get("first_name", ""),
+                    "last_name": applicant.get("last_name", ""),
+                    "email": applicant.get("email", ""),
+                    "phone": applicant.get("phone", ""),
+                    "linkedin_url": applicant.get("linkedin_url", ""),
+                    "location": applicant.get("location", ""),
+                    "resume_path": applicant.get("resume_path", ""),
+                }
+                mark_applied(job, method="auto", ats=result["ats"], success=result["success"], form_data=form_data)
                 applied_ids.add(job["id"])
 
         save_applied()
