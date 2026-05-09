@@ -13,6 +13,10 @@ import requests
 import yaml
 from jinja2 import Environment, FileSystemLoader
 
+from apply_tracker import get_applied_map, load_applied_ids, mark_applied, save_applied
+from auto_apply import attempt_auto_apply
+from cover_letter import generate_cover_letter
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 log = logging.getLogger(__name__)
 
@@ -263,22 +267,28 @@ def detect_modality(job: dict, accepted: list[str]) -> str:
 
 # ── Render ───────────────────────────────────────────────────────────────────
 
-def render_dashboard(jobs: list[dict], config: dict) -> str:
+def render_dashboard(jobs: list[dict], config: dict, applied_map: dict[str, dict] | None = None) -> str:
     env = Environment(loader=FileSystemLoader(str(SCRIPTS_DIR)), autoescape=True)
     template = env.get_template("template.html")
 
     now_brt = datetime.now(BRT).strftime("%d/%m/%Y às %H:%M (BRT)")
     profile_name = config.get("profile", {}).get("name", "")
     modalities = config.get("search", {}).get("modalities", [])
+    applied_map = applied_map or {}
 
     for job in jobs:
         job["modality"] = detect_modality(job, modalities)
+        entry = applied_map.get(job["id"])
+        job["applied"] = entry is not None
+        job["apply_success"] = entry["success"] if entry else None
+        job["apply_method"] = entry["method"] if entry else None
 
     return template.render(
         jobs=jobs,
         profile_name=profile_name,
         updated_at=now_brt,
         total=len(jobs),
+        applied_count=sum(1 for j in jobs if j["applied"]),
     )
 
 
@@ -297,6 +307,8 @@ def main() -> None:
     config = load_config()
     keywords: list[str] = config.get("search", {}).get("keywords", [])
     user_stack: list[str] = config.get("profile", {}).get("stack", [])
+    auto_cfg: dict = config.get("auto_apply", {})
+    applicant: dict = config.get("applicant", {})
 
     raw_jobs: list[dict] = []
     raw_jobs += fetch_wwr_rss(keywords)
@@ -310,7 +322,34 @@ def main() -> None:
 
     log.info("Total jobs after processing: %d", len(jobs))
 
-    html_content = render_dashboard(jobs, config)
+    # ── Auto-apply pipeline ──────────────────────────────────────────────────
+    applied_ids = load_applied_ids()
+
+    if auto_cfg.get("enabled", False):
+        dry_run: bool = auto_cfg.get("dry_run", True)
+        min_match: int = auto_cfg.get("min_match_pct", 70)
+        max_per_run: int = auto_cfg.get("max_per_run", 3)
+        lang: str = auto_cfg.get("cover_letter_language", "en")
+        allowlist: list[str] = auto_cfg.get("ats_allowlist", ["greenhouse", "lever", "workable"])
+
+        candidates = [
+            j for j in jobs
+            if j["id"] not in applied_ids and j["match_pct"] >= min_match
+        ][:max_per_run]
+
+        log.info("Auto-apply: %d candidates (dry_run=%s)", len(candidates), dry_run)
+
+        for job in candidates:
+            cover = generate_cover_letter(job, config.get("profile", {}), language=lang)
+            result = attempt_auto_apply(job, applicant, cover, dry_run=dry_run, ats_allowlist=allowlist)
+            if result["ats"] is not None:
+                mark_applied(job, method="auto", ats=result["ats"], success=result["success"])
+                applied_ids.add(job["id"])
+
+        save_applied()
+
+    applied_map = get_applied_map()
+    html_content = render_dashboard(jobs, config, applied_map)
     deploy(html_content)
 
 

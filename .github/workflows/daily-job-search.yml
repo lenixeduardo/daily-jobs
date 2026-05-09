@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -32,12 +32,25 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/job-search/requirements.txt
 
+      - name: Install Playwright browsers
+        run: playwright install chromium --with-deps
+
       - name: Run job search
         env:
-          JSEARCH_API_KEY: ${{ secrets.JSEARCH_API_KEY }}
-          ADZUNA_APP_ID:   ${{ secrets.ADZUNA_APP_ID }}
-          ADZUNA_APP_KEY:  ${{ secrets.ADZUNA_APP_KEY }}
+          JSEARCH_API_KEY:    ${{ secrets.JSEARCH_API_KEY }}
+          ADZUNA_APP_ID:      ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_APP_KEY:     ${{ secrets.ADZUNA_APP_KEY }}
+          ANTHROPIC_API_KEY:  ${{ secrets.ANTHROPIC_API_KEY }}
         run: python scripts/job-search/search.py
+
+      - name: Commit applied_jobs state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin ${{ github.ref_name }} || true
+          git add data/applied_jobs.json data/screenshots/ || true
+          git diff --staged --quiet || git commit -m "chore: update applied_jobs [skip ci]"
+          git push || true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
